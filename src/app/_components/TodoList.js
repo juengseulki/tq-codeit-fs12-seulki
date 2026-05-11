@@ -1,10 +1,12 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import TodoItem from "@/app/_components/TodoItem";
-import { fetchTodos } from "@/api/todos";
+import { fetchTodos, toggleTodoLike } from "@/api/todos";
 
 export default function TodoList() {
+  const queryClient = useQueryClient();
+
   const {
     data: todos = [],
     isPending,
@@ -12,6 +14,32 @@ export default function TodoList() {
   } = useQuery({
     queryKey: ["todos"],
     queryFn: fetchTodos,
+  });
+
+  const toggleLikeMutation = useMutation({
+    mutationFn: toggleTodoLike,
+
+    onMutate: async (newTodo) => {
+      await queryClient.cancelQueries({ queryKey: ["todos"] });
+
+      const previousTodos = queryClient.getQueryData(["todos"]);
+
+      queryClient.setQueryData(["todos"], (old = []) =>
+        old.map((todo) =>
+          todo.id === newTodo.id ? { ...todo, liked: !todo.liked } : todo,
+        ),
+      );
+
+      return { previousTodos };
+    },
+
+    onError: (err, newTodo, context) => {
+      queryClient.setQueryData(["todos"], context.previousTodos);
+    },
+
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ["todos"] });
+    },
   });
 
   if (isPending) {
@@ -33,7 +61,13 @@ export default function TodoList() {
       {todos.length === 0 ? (
         <div className="p-4 text-center">할 일이 없습니다.</div>
       ) : (
-        todos.map((todo) => <TodoItem key={todo.id} todo={todo} />)
+        todos.map((todo) => (
+          <TodoItem
+            key={todo.id}
+            todo={todo}
+            onToggleLike={() => toggleLikeMutation.mutate(todo)}
+          />
+        ))
       )}
     </div>
   );
