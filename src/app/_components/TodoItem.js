@@ -19,7 +19,7 @@ export default function TodoItem({ todo }) {
         </span>
       </div>
       <button
-        // onClick={handleViewDetail}
+        onClick={handleViewDetail}
         className="px-2 py-1 bg-blue-500 text-white rounded cursor-pointer"
       >
         상세보기
