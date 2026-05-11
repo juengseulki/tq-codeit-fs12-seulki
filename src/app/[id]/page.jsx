@@ -17,6 +17,10 @@ export default function TodoDetailPage() {
     queryFn: () => fetchTodo(id),
     enabled: !!id,
     gcTime: 10 * 60 * 1000,
+
+    meta: {
+      name: "todos 상세",
+    },
   });
 
   if (isLoading) {
