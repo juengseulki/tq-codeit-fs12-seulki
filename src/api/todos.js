@@ -83,3 +83,23 @@ export const toggleTodoStatus = async (id, currentCompleted) => {
 
   return await response.json();
 };
+
+export const fetchInfiniteTodos = async ({ pageParam = 1 }) => {
+  const limit = 5;
+
+  const response = await fetch(`${API_URL}?_page=${pageParam}&_limit=${limit}`);
+
+  if (!response.ok) {
+    throw new Error("서버에서 데이터를 가져오는데 실패했습니다.");
+  }
+
+  const totalCount = response.headers.get("X-Total-Count");
+  const data = await response.json();
+
+  const totalPages = Math.ceil(parseInt(totalCount || "0") / limit);
+
+  return {
+    todos: data,
+    nextPage: pageParam < totalPages ? pageParam + 1 : undefined,
+  };
+};
